@@ -1,0 +1,120 @@
+<?xml version="1.0"?>
+<ProjectRoot xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+  <Header>Light_Tracker</Header>
+  <Items xsi:type="ProjectFolder">
+    <Header>Generated</Header>
+    <Items xsi:type="ProjectFile">
+      <Header>Blob_Detect.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Camera_Capture.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Center_Direction.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Color_Threshold_HSV_Filter.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>CRT_Controller.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>CSI_Camera.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>HDMI_Out.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>I2C_Master_Interface.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Image_Data_Package.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Light_Tracker.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>RGB2HSV_Filter.vhd</Header>
+    </Items>
+    <Items xsi:type="ProjectFile">
+      <Header>Servo_Controller.vhd</Header>
+    </Items>
+  </Items>
+  <Items xsi:type="ProjectFolder">
+    <Header>Libraries</Header>
+    <Items xsi:type="ProjectFolder">
+      <Header>CSI_Camera</Header>
+      <Items xsi:type="ProjectFileVHDP">
+        <Header>ALTDDIO_IN.qsys.vhdp</Header>
+      </Items>
+      <Items xsi:type="ProjectFileVHDP">
+        <Header>ALTSYNCRAM.qsys.vhdp</Header>
+      </Items>
+      <Items xsi:type="ProjectFileVHDP">
+        <Header>CSI_Camera.vhdp</Header>
+      </Items>
+    </Items>
+    <Items xsi:type="ProjectFolder">
+      <Header>HDMI</Header>
+      <Items xsi:type="ProjectFileVHDP">
+        <Header>CRT_Controller.vhdp</Header>
+      </Items>
+      <Items xsi:type="ProjectFile">
+        <Header>DVI_OUT.v</Header>
+      </Items>
+      <Items xsi:type="ProjectFileVHDP">
+        <Header>HDMI_Out.vhdp</Header>
+      </Items>
+      <Items xsi:type="ProjectFile">
+        <Header>TMDS_ENCODE.v</Header>
+      </Items>
+      <Items xsi:type="ProjectFile">
+        <Header>VS_PLL.qip</Header>
+      </Items>
+      <Items xsi:type="ProjectFile">
+        <Header>VS_PLL.vhd</Header>
+      </Items>
+    </Items>
+    <Items xsi:type="ProjectFolder">
+      <Header>ISSP</Header>
+      <Items xsi:type="ProjectFile">
+        <Header>ISSP.qsys</Header>
+      </Items>
+      <Items xsi:type="ProjectFileVHDP">
+        <Header>ISSP.qsys.vhdp</Header>
+      </Items>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>Blob_Detect.vhdp</Header>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>Camera_Capture.vhdp</Header>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>Color_Threshold_HSV.vhdp</Header>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>I2C.vhdp</Header>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>Image_Data.vhdp</Header>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>RGB2HSV.vhdp</Header>
+    </Items>
+    <Items xsi:type="ProjectFileVHDP">
+      <Header>Servo.vhdp</Header>
+    </Items>
+  </Items>
+  <Items xsi:type="ProjectFileVHDP">
+    <Header>Center_Direction.vhdp</Header>
+  </Items>
+  <Items xsi:type="ProjectFileVHDP">
+    <Header>Light_Tracker.vhdp</Header>
+  </Items>
+  <SelectedExtensionsSave>
+    <string>Level Shifter</string>
+    <string>Camera and HDMI</string>
+  </SelectedExtensionsSave>
+  <IOVoltage>0</IOVoltage>
+</ProjectRoot>

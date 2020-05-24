@@ -1,0 +1,300 @@
+Main
+(
+
+    Shifter_H            : OUT    STD_LOGIC_VECTOR (1 to 8); --H1-8
+
+    Camera_CLK_Lane      : IN     STD_LOGIC;
+    Camera_Data_Lane     : IN     STD_LOGIC_VECTOR (1 downto 0);
+    Camera_Enable        : OUT    STD_LOGIC;
+    Camera_SCL           : INOUT  STD_LOGIC;
+    Camera_SDA           : INOUT  STD_LOGIC;
+
+    HDMI_DATA            : OUT    STD_LOGIC_VECTOR(2 downto 0);
+    HDMI_CLK             : OUT    STD_LOGIC;
+    HDMI_HPD             : IN     STD_LOGIC;
+
+)
+{
+
+--GENERATED SIGNALS---------------------------------------------------------------------------------------------
+
+    --Camera and HDMI----------------------------------------------------------------------------------------
+
+    --Camera Input
+    CONSTANT Row_Buf             : BOOLEAN := true;   --Uses more RAM, but helps with less noise
+
+    --HDMI Output
+    CONSTANT Force_Mono          : BOOLEAN := true;  --true forces the image to monochrome
+    CONSTANT Capture_Color_Depth : NATURAL := 1;      --How many bits for each color
+    CONSTANT Capture_Compression : NATURAL := 2;      --Higher value = less RAM but also less resolution
+    CONSTANT Full_Image          : BOOLEAN := true;   --true -> full image with less resolution | false -> part of image with full resolution
+
+--GENERATED CODE------------------------------------------------------------------------------------------------
+
+    --Level Shifter----------------------------------------------------------------------------------------
+
+    Process ()
+    {
+        Thread
+        {
+            If(Center_Direction_Move_Up AND Servo_Controller_Pos_Y < 127)
+            {
+                Servo_Controller_Pos_Y <= Servo_Controller_Pos_Y + 1;
+            }
+            Elsif(Center_Direction_Move_Down AND Servo_Controller_Pos_Y > 0)
+            {
+                Servo_Controller_Pos_Y <= Servo_Controller_Pos_Y - 1;
+            }
+
+            If(Center_Direction_Move_Left AND Servo_Controller_Pos_X > 0)
+            {
+                Servo_Controller_Pos_X <= Servo_Controller_Pos_X - 1;
+            }
+            Elsif(Center_Direction_Move_Right AND Servo_Controller_Pos_X < 127)
+            {
+                Servo_Controller_Pos_X <= Servo_Controller_Pos_X + 1;
+            }
+
+            Wait(20ms); --50Hz like framerate
+        }
+    }
+
+    --Camera and HDMI----------------------------------------------------------------------------------------
+
+
+    Camera_Capture_iStream <= Red_Threshold_Stream;
+    --Camera_Capture_iStream <= Camera_Stream;
+
+--GENERATED COMPONENTS------------------------------------------------------------------------------------------
+
+    --Level Shifter----------------------------------------------------------------------------------------
+
+    SIGNAL Servo_Controller_Pos_X           : NATURAL   range 0 to 127 := 64;
+    NewComponent Servo_Controller
+    (
+        CLK_Frequency => 12000000,
+        
+        Reset         => '0',
+        Pos           => Servo_Controller_Pos_X,
+        Servo         => Shifter_H(1),
+    );
+    
+    SIGNAL Servo_Controller_Pos_Y           : NATURAL   range 0 to 127 := 64;
+    NewComponent Servo_Controller
+    (
+        CLK_Frequency => 12000000,
+        
+        Reset         => '0',
+        Pos           => Servo_Controller_Pos_Y,
+        Servo         => Shifter_H(2),
+    );
+
+    Connections
+    {
+        Shifter_H[1] => LS_2,
+        Shifter_H[2] => LS_1,
+        Shifter_H[3] => LS_4,
+        Shifter_H[4] => LS_3,
+        Shifter_H[5] => LS_5,
+        Shifter_H[6] => LS_7,
+        Shifter_H[7] => LS_6,
+        Shifter_H[8] => LS_8,
+    }
+    
+    --Camera and HDMI----------------------------------------------------------------------------------------
+
+
+    --Camera Interface-------------------------------------------------------------------
+
+    Camera_Enable <= '1';
+
+    --Receive CSI Data
+    SIGNAL Camera_Stream         : rgb_stream;
+    NewComponent CSI_Camera
+    (
+        CLK_Frequency => SYS_CLK_Frequency,
+        CLK_as_PCLK   => Row_Buf,
+
+        CLK           => SYS_CLK,
+
+        Reset         => '0',
+        CLK_Lane      => Camera_CLK_Lane,
+        Data_Lane     => Camera_Data_Lane,
+        SCL           => Camera_SCL,
+        SDA           => Camera_SDA,
+
+        oStream       => Camera_Stream,
+    );
+
+    --Filter Red Pixels------------------------------------------------------------------
+
+    --Convert to HSV color space
+    SIGNAL HSV_Stream          : rgb_stream;
+    NewComponent RGB2HSV_Filter
+    (
+        CLK_Edge => true,
+
+        iStream  => Camera_Stream,
+        oStream  => HSV_Stream,
+    );
+
+    --Filter red pixels
+    SIGNAL Red_Threshold_Stream : rgb_stream;
+    NewComponent Color_Threshold_HSV_Filter
+    (
+        CLK_Edge => false,
+
+--        H_Min    => 170,      --Min Hue (0°-180°)
+--        H_Max    => 30,       --Max Hue (0°-180°)
+--        S_Min    => 60,       --Min Saturation (0-255)
+--        S_Max    => 255,      --Max Saturation (0-255)
+--        V_Min    => 20,       --Min Brightness (0-255)
+--        V_Max    => 255,      --Max Brightness (0-255)
+        H_Min    => 0,        --Min Hue (0°-180°)
+        H_Max    => 255,      --Max Hue (0°-180°)
+        S_Min    => 0,        --Min Saturation (0-255)
+        S_Max    => 5,       --Max Saturation (0-255)
+        V_Min    => 240,      --Min Brightness (0-255)
+        V_Max    => 255,      --Max Brightness (0-255)
+        iStream  => HSV_Stream,
+        oStream  => Red_Threshold_Stream,
+    );
+    
+    SIGNAL Blob_Detect_Blob_Busy       : STD_LOGIC;
+    SIGNAL Blob_Detect_Blobs           : NATURAL   range 0 to 16;
+    SIGNAL Blob_Detect_Blob_Addr       : NATURAL   range 0 to 16-1;
+    SIGNAL Blob_Detect_Blob_X0         : NATURAL   range 0 to Image_Width-1;
+    SIGNAL Blob_Detect_Blob_X1         : NATURAL   range 0 to Image_Width-1;
+    SIGNAL Blob_Detect_Blob_Y0         : NATURAL   range 0 to Image_Height-1;
+    SIGNAL Blob_Detect_Blob_Y1         : NATURAL   range 0 to Image_Height-1;
+    
+    NewComponent Blob_Detect
+    (
+        Blob_Number     => 16,
+        Blob_Buffer     => 8,
+        Edge_Reg_Size   => 3,
+        Min_Blob_Width  => 20,
+        Min_Blob_Height => 20,
+        Max_Blob_Width  => Image_Width-1,
+        Max_Blob_Height => Image_Height-1,
+        Upscale_Mult    => 1,
+        Upscale_Start   => 0,
+        
+        New_Pixel       => Red_Threshold_Stream.New_Pixel,
+        Pixel_In        => Red_Threshold_Stream.R(7),
+        Column          => Red_Threshold_Stream.Column,
+        Row             => Red_Threshold_Stream.Row,
+        Blob_Busy       => Blob_Detect_Blob_Busy,
+        Blobs           => Blob_Detect_Blobs,
+        Blob_Addr       => Blob_Detect_Blob_Addr,
+        Blob_X0         => Blob_Detect_Blob_X0,
+        Blob_X1         => Blob_Detect_Blob_X1,
+        Blob_Y0         => Blob_Detect_Blob_Y0,
+        Blob_Y1         => Blob_Detect_Blob_Y1,
+    );
+    
+    SIGNAL Center_Direction_Move_Up         : BOOLEAN;
+    SIGNAL Center_Direction_Move_Down       : BOOLEAN;
+    SIGNAL Center_Direction_Move_Right      : BOOLEAN;
+    SIGNAL Center_Direction_Move_Left       : BOOLEAN;
+    NewComponent Center_Direction
+    (
+        Max_Blob_Number => 32,
+        Max_Offset      => 1,
+        
+        CLK             => SYS_CLK,
+        
+        Blobs           => Blob_Detect_Blobs,
+        Blob_Addr       => Blob_Detect_Blob_Addr,
+        Blob_X0         => Blob_Detect_Blob_X0,
+        Blob_X1         => Blob_Detect_Blob_X1,
+        Blob_Y0         => Blob_Detect_Blob_Y0,
+        Blob_Y1         => Blob_Detect_Blob_Y1,
+        
+        Move_Up         => Center_Direction_Move_Up,
+        Move_Down       => Center_Direction_Move_Down,
+        Move_Right      => Center_Direction_Move_Right,
+        Move_Left       => Center_Direction_Move_Left,
+    );
+
+    --Output image with HDMI-------------------------------------------------------------
+
+    SIGNAL Camera_Capture_iStream     : rgb_stream;
+
+    --Save images in RAM
+    SIGNAL Camera_Capture_Read_Column    : NATURAL          range 0 to 639;
+    SIGNAL Camera_Capture_Read_Row       : NATURAL          range 0 to 479;
+    SIGNAL Camera_Capture_Read_Data      : STD_LOGIC_VECTOR (23 downto 0);
+
+    CONSTANT RGB   : BOOLEAN := NOT Force_Mono;
+
+    NewComponent Camera_Capture
+    (
+        Compression => capture_compression,
+        Width       => Capture_Color_Depth,
+        Full_Image  => Full_Image,
+        RGB         => RGB,
+        CLK_Edge    => true,
+
+        New_Pixel   => Camera_Capture_iStream.New_Pixel,
+        Column      => Camera_Capture_iStream.Column,
+        Row         => Camera_Capture_iStream.Row,
+        Pixel_R     => Camera_Capture_iStream.R,
+        Pixel_G     => Camera_Capture_iStream.G,
+        Pixel_B     => Camera_Capture_iStream.B,
+
+        Read_Column => Camera_Capture_Read_Column,
+        Read_Row    => Camera_Capture_Read_Row,
+        Read_Data   => Camera_Capture_Read_Data,
+    );
+
+    --Read images from RAM to create video stream
+    CONSTANT SYS_CLK_Frequency  : NATURAL := 50000000;
+    SIGNAL   SYS_CLK            : STD_LOGIC;
+    NewComponent CRT_Controller
+    (
+        image_size_div => 1,
+
+        Read_Column => Camera_Capture_Read_Column,
+        Read_Row    => Camera_Capture_Read_Row,
+        Read_Data   => Camera_Capture_Read_Data,
+        
+        SYS_CLK     => SYS_CLK,
+        
+        VS_PCLK     => HDMI_Out_VS_PCLK,
+        VS_SCLK     => HDMI_Out_VS_SCLK,
+        VS_R        => HDMI_Out_VS_R,
+        VS_G        => HDMI_Out_VS_G,
+        VS_B        => HDMI_Out_VS_B,
+        VS_HS       => HDMI_Out_VS_HS,
+        VS_VS       => HDMI_Out_VS_VS,
+        VS_DE       => HDMI_Out_VS_DE,
+    );
+
+    --Output video stream with hdmi interface
+    SIGNAL HDMI_Out_VS_PCLK   : STD_LOGIC;
+    SIGNAL HDMI_Out_VS_SCLK   : STD_LOGIC;
+    SIGNAL HDMI_Out_VS_R      : STD_LOGIC_VECTOR (7 downto 0);
+    SIGNAL HDMI_Out_VS_G      : STD_LOGIC_VECTOR (7 downto 0);
+    SIGNAL HDMI_Out_VS_B      : STD_LOGIC_VECTOR (7 downto 0);
+    SIGNAL HDMI_Out_VS_HS     : STD_LOGIC;
+    SIGNAL HDMI_Out_VS_VS     : STD_LOGIC;
+    SIGNAL HDMI_Out_VS_DE     : STD_LOGIC;
+
+    NewComponent HDMI_Out
+    (
+        VS_PCLK    => HDMI_Out_VS_PCLK,
+        VS_SCLK    => HDMI_Out_VS_SCLK,
+        VS_R       => HDMI_Out_VS_R,
+        VS_G       => HDMI_Out_VS_G,
+        VS_B       => HDMI_Out_VS_B,
+        VS_HS      => HDMI_Out_VS_HS,
+        VS_VS      => HDMI_Out_VS_VS,
+        VS_DE      => HDMI_Out_VS_DE,
+
+        HDMI_DATA  => HDMI_DATA,
+        HDMI_CLK   => HDMI_CLK,
+        HDMI_HPD   => HDMI_HPD,
+    );
+
+}

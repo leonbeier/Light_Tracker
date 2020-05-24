@@ -1,0 +1,72 @@
+/*
+    Name: Squares
+    Rev: 1.0
+    Creator: Leon Beier
+    Date: 23.02.2020
+    Copyright (c) 2020 Protop Solutions UG. All right reserved.
+    
+    Permission is hereby granted, free of charge, to any person obtaining a copy of
+    this hdl code and associated documentation files (the "HDL Code"), to deal in the
+    HDL Code without restriction, including without limitation the rights to use,
+    copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the
+    HDL Code, and to permit persons to whom the HDL Code is furnished to do so,
+    subject to the following conditions:
+
+    The above copyright notice and this permission notice shall be included in all
+    copies or substantial portions of the HDL Code.
+
+    THE HDL Code IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS
+    FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR
+    COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN
+    AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+    WITH THE HDL Code OR THE USE OR OTHER DEALINGS IN THE HDL Code.
+ */
+
+Component Center_Direction
+(
+    Generic
+    (
+        Max_Blob_Number : NATURAL := 32;
+        Max_Offset      : NATURAL := 20; --Max offset from center until move is triggered
+    );
+    
+    Blobs     : IN  NATURAL range 0 to Max_Blob_Number;
+    Blob_Addr : BUFFER NATURAL range 0 to Max_Blob_Number-1;
+    Blob_X0   : IN  NATURAL range 0 to Image_Width-1;
+    Blob_X1   : IN  NATURAL range 0 to Image_Width-1;
+    Blob_Y0   : IN  NATURAL range 0 to Image_Height-1;
+    Blob_Y1   : IN  NATURAL range 0 to Image_Height-1;
+    
+    Move_Up     : OUT BOOLEAN;
+    Move_Down   : OUT BOOLEAN;
+    Move_Right  : OUT BOOLEAN;
+    Move_Left   : OUT BOOLEAN;
+)
+{
+    
+    Process ()
+    {
+        Blob_Addr <= 0;
+        If(Blobs > 0)
+        {
+            VARIABLE center_x : NATURAL range 0 to Image_Width;
+            VARIABLE center_y : NATURAL range 0 to Image_Height;
+            center_x := (Blob_X1+Blob_X0)/2;
+            center_y := (Blob_Y1+Blob_Y0)/2;
+            
+            Move_Right <= (center_x < Image_Width/2 - Max_Offset);
+            Move_Left  <= (center_x > Image_Width/2 + Max_Offset);
+            Move_Down  <= (center_y < Image_Height/2 - Max_Offset);
+            Move_Up    <= (center_y > Image_Height/2 - Max_Offset);
+        }
+        Else
+        {
+            Move_Up    <= false;
+            Move_Down  <= false;
+            Move_Right <= false;
+            Move_Left  <= false;
+        }
+    }
+
+}
